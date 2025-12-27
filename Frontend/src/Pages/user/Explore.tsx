@@ -48,7 +48,7 @@ const Explore = () => {
 
     
     const followCompany = (companyId : string) => {
-        axiosInstance.get(`/follow-unfollow/${companyId}`)
+        axiosInstance.post(`/follow-unfollow/${companyId}`)
         .then((res) => {
             if(res.data.message){
                 toast.success(res.data.message);

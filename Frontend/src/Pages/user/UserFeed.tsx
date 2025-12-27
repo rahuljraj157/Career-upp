@@ -62,15 +62,36 @@ const UserFeed = () => {
   }
 
   const unFollowCompany = (companyId : string) => {
-    axiosInstance.get(`/follow-unfollow/${companyId}`)
+
+    console.log("gyerfgerygfrygfrygtfrygyrgrygyrgggfi8gfg")
+    axiosInstance.post(`/follow-unfollow/${companyId}`)
     .then((res) => {
         if(res.data.message){
+          console.log("ywdgyyyfdffdfddfdffdffdffddfdfdf")
             toast.success(res.data.message);
             setUpdateUI((prev) => !prev);
         }
     }).catch((error) => console.log(error)
     )
 }
+// const unFollowCompany = (companyId: string) => {
+//   axiosInstance.post(
+//     `/follow-unfollow/${companyId}`,
+//     {
+//       headers: {
+//         Authorization: `Bearer ${localStorage.getItem("userToken")}`
+//       }
+//     }
+//   )
+//   .then((res) => {
+//     if (res.data.message) {
+//       toast.success(res.data.message);
+//       setUpdateUI((prev) => !prev);
+//     }
+//   })
+//   .catch((error) => console.log(error));
+// };
+
 
   // Function to add a new post to the 'posts' state
   const addNewPost = (newPost : any) => {

@@ -48,7 +48,7 @@
         
 //     }
 // }
-
+///////orginal/////////////
 import jwt from 'jsonwebtoken';
 import userModel from '../models/userModel.js';
 import companyModel from '../models/companyModel.js';
@@ -98,3 +98,4 @@ export const verify = async (req, res, next) => {
     return res.status(401).json({ message: 'Unauthorized!' });
   }
 };
+

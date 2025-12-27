@@ -13,6 +13,9 @@ getCompanyPosts}
 from '../../controllers/user/postController.js';
 import upload from '../../utils/multerSetup.js';
 
+console.log("✅ userRoutes file loaded");
+
+
 //search
 router.get('/search' , verify , search);
 
@@ -63,7 +66,7 @@ router.get('/accept/:userId' , verify , acceptConnectionRequest);
 
 router.get('/reject/:userId' , verify , rejectConnectionRequest);
 
-router.get('/follow-unfollow/:companyId' , verify , followAndUnfollowCompany);
+router.post('/follow-unfollow/:companyId' , verify , followAndUnfollowCompany);
 
 
 

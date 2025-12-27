@@ -482,9 +482,7 @@ export const saveandUnsavePosts = async (req, res, next) => {
   try {
     const postId = req.params.postId;
     const user = req.user;
-    console.log("user:", user,200000);
-    console.log("params:", req.params,7890);
-console.log("postId:", postId,7890);
+
 
     const post = await postModel.findById(postId)
     console.log("post:", post, 7890);
@@ -494,9 +492,22 @@ console.log("postId:", postId,7890);
       return res.status(404).json({error : 'Post Not Found'});
      
     }
-    const userData=await userModel.findById(user._id);
+    let userData
+    if(user.role==="company"){
+      userData=await companyModel.findById(user._id);
 
-    const isSaved = userData.savedPosts.some((savedPosts) => savedPosts.postId.toString() === postId.toString());
+    }else if(user.role==="Candidate"){
+            userData=await userModel.findById(user._id);
+
+
+    }
+    
+        
+    
+   
+    console.log(54,userData)
+
+    const isSaved = userData?.savedPosts.some((savedPosts) => savedPosts.postId.toString() === postId.toString());
     console.log(isSaved, "isSaved", 66000);
     if(isSaved){
       userData.savedPosts = userData.savedPosts.filter((savedPosts) => savedPosts.postId.toString() !== postId.toString());
