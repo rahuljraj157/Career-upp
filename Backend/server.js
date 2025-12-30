@@ -32,6 +32,7 @@ const io = new SocketIoServer(server , {
     }
 });
 
+//https://career-upp-bz9i.onrender.com
 
 const corsOptions = {
     origin: [
@@ -47,7 +48,10 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(nocache());
 app.use(morgan('dev'));
-app.use(express.static(path.join(__dirname,"../Frontend/dist")));
+// STATIC frontend
+app.use(express.static(path.join(__dirname, "../Frontend/dist")));
+
+// app.use(express.static(path.join(__dirname,"../Frontend/dist")));
 app.use(express.static('Backend/public/resumes')); 
 app.use(express.json()); 
 app.use(express.urlencoded({extended : true})); 
@@ -111,10 +115,13 @@ io.on('connection' , (socket) => {
 })
 
 
-app.get("*", function (req, res) {
-    res.sendFile(path.join(__dirname,"../Frontend/dist/index.html"));
+// app.get("*", function (req, res) {
+//     res.sendFile(path.join(__dirname,"../Frontend/dist/index.html"));
+// });
+// React Router fallback (LAST)
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "../Frontend/dist/index.html"));
 });
-
 const port = process.env.PORT || 3000;
 server.listen(port , () => {
     console.log(`server on http://localhost:${port}`);

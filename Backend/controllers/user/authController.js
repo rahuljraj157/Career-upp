@@ -25,6 +25,8 @@ export const register = async (req, res , next) => {
     try {
 
         let {username , email , phone, role , password} = req.body.userData;
+        console.log("fqwtgdfwwetgqfdgwedfegdqwdfqwegdfegdfedgyfvedfwegdtdfvgefv")
+        console.log("gdvwegdveu")
         phone = Number(phone);
 
         const existingUser = await userModel.findOne({email});
@@ -64,6 +66,7 @@ export const register = async (req, res , next) => {
             }
         }
     } catch (error) {
+        console.log(error,"jjghsghsgsg")
         next(error);
         
     }
