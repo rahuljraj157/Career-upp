@@ -5,8 +5,8 @@ export const axiosInstance = axios.create({
     // baseURL :'http://localhost:3000'
     // baseURL :  'https://careerup.website' 
     // baseURL : "/"
-     baseURL: "http://localhost:3000"
-    //  baseURL: "https://career-upp-bz9i.onrender.com"
+    //  baseURL: "http://localhost:3000"
+     baseURL: "https://career-upp-bz9i.onrender.com"
 
 
 });
