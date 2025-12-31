@@ -48,7 +48,10 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const SMTP_USER = process.env.SMTP_USER;
+
+export const sendVerificationEmail = async (userEmailId) => {
+  try {
+    const SMTP_USER = process.env.SMTP_USER;
 const SMTP_PASS = process.env.SMTP_PASS;
 
 const transporter = nodemailer.createTransport({
@@ -67,8 +70,6 @@ const transporter = nodemailer.createTransport({
   socketTimeout: 10000,
 });
 
-export const sendVerificationEmail = async (userEmailId) => {
-  try {
     const otpValue = Math.floor(100000 + Math.random() * 900000); // always 6 digits
 
     const mailContent = {
