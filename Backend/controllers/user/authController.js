@@ -1,32 +1,37 @@
-//Backend\controllers\user\authController.js
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 dotenv.config();
+
 import userModel from '../../models/userModel.js';
 import companyModel from '../../models/companyModel.js';
 import { sendVerificationEmail } from '../../utils/verificationMail.js';
 
-
-
-
-
 const hashPassword = async (password) => {
     const salt = await bcrypt.genSalt(10); 
-
     const hash = await bcrypt.hash(password , salt);
-
     return hash;
 }  
 
 let globalStored = null;
 
-export const register = async (req, res , next) => {
+// ================= REGISTER =================
+export const register = async (req, res) => {
     try {
+        console.log("📥 REGISTER BODY:", req.body);
+
+        if (!req.body || !req.body.userData) {
+            return res.status(400).json({ error: "userData missing" });
+        }
 
         let {username , email , phone, role , password} = req.body.userData;
-        console.log("fqwtgdfwwetgqfdgwedfegdqwdfqwegdfegdfedgyfvedfwegdtdfvgefv")
-        console.log("gdvwegdveu")
+
+        console.log("📧 EMAIL:", email);
+
+        if (!phone) {
+            return res.status(400).json({ error: "Phone is required" });
+        }
+
         phone = Number(phone);
 
         const existingUser = await userModel.findOne({email});
@@ -35,7 +40,6 @@ export const register = async (req, res , next) => {
         let existingMobile = await userModel.findOne({phone});
         if(!existingMobile){
             existingMobile = await companyModel.findOne({phone});
-
             if(existingMobile){
                 return res.status(401).json({error : 'Account already exists'});
             }
@@ -50,34 +54,49 @@ export const register = async (req, res , next) => {
             return res.status(401).json({ error: 'Invalid phone number' });
         }
 
-        const userData = {
-            username , email , phone , role , password
-        };
-
-        if(userData){
-            const {otpValue , result} =  await sendVerificationEmail(email);
-            globalStored = otpValue;
-
-            if(otpValue && result){
-                return res.json({message : 'Check email for OTP Verification'})
-
-            } else if(!result || !otpValue) {
-                return res.status(500).json({error : 'Verification email failed to send'})
-            }
+        // EMAIL SAFE
+        let otpValue, result;
+        try {
+            const emailRes = await sendVerificationEmail(email);
+            otpValue = emailRes?.otpValue;
+            result = emailRes?.result;
+            console.log("📨 OTP:", otpValue, result);
+        } catch (err) {
+            console.log("🔥 EMAIL ERROR:", err);
+            return res.status(500).json({ error: "Email sending failed" });
         }
+
+        globalStored = otpValue;
+
+        if(otpValue && result){
+            return res.json({message : 'Check email for OTP Verification'});
+        } else {
+            return res.status(500).json({error : 'Verification email failed to send'});
+        }
+
     } catch (error) {
-        console.log(error,"jjghsghsgsg")
-        next(error);
-        
+        console.log("🔥 REGISTER ERROR:", error);
+        return res.status(500).json({ error: error.message || "Server Error" });
     }
 }
 
-export const otpRegister = async (req, res, next) => {
+// ================= OTP REGISTER =================
+export const otpRegister = async (req, res) => {
     try {
-        console.log(req.body);
-        console.log(globalStored)
+        console.log("📥 OTP BODY:", req.body);
+        console.log("📦 STORED OTP:", globalStored);
+
+        if (!req.body || !req.body.userData) {
+            return res.status(400).json({ error: "userData missing" });
+        }
+
         let {username , email , phone, role , password } = req.body.userData;
         let otp = req.body.otp;
+
+        if (!otp) {
+            return res.status(400).json({ error: "OTP required" });
+        }
+
         otp = Number(otp);
 
         const existingUser = await userModel.findOne({email});
@@ -86,7 +105,6 @@ export const otpRegister = async (req, res, next) => {
         let existingMobile = await userModel.findOne({phone})
         if(!existingMobile){
             existingMobile = await companyModel.findOne({phone});
-
             if(existingMobile){
                 return res.status(401).json({error : 'Account already exists'});
             }
@@ -108,30 +126,37 @@ export const otpRegister = async (req, res, next) => {
             if(role === 'Candidate'){
                 const user = new userModel({
                     name: username , email , role , phone, password : bcryptedpassword
-                })
+                });
+
                 await user.save(); 
-                console.log(user);
-    
-                res.status(201).json({user ,message : 'Verification success!'});
-    
+                console.log("✅ USER CREATED:", user);
+
+                return res.status(201).json({user ,message : 'Verification success!'});
+
             } else {
                 const company = new companyModel({
                     name: username , email , role , phone, password : bcryptedpassword
-                })
+                });
+
                 await company.save();
-                console.log(company);
-    
-                res.status(201).json({company ,message : 'Verification Success!'});
+                console.log("✅ COMPANY CREATED:", company);
+
+                return res.status(201).json({company ,message : 'Verification Success!'});
             }
+
         } else {
-            return res.status(500).json({error : 'Invalid OTP'});
+            console.log("❌ OTP MISMATCH:", otp, globalStored);
+            return res.status(401).json({error : 'Invalid OTP'});
         }
+
     } catch (error) {
-        next(error);
+        console.log("🔥 OTP REGISTER ERROR:", error);
+        return res.status(500).json({ error: error.message || "Server Error" });
     }
 }
 
-export const login = async (req, res , next) => {
+// ================= LOGIN =================
+export const login = async (req, res) => {
     try {
         const {email , password} = req.body;
 
@@ -148,129 +173,134 @@ export const login = async (req, res , next) => {
                 return res.status(401).json({ error: 'Account is blocked' });
             }
 
-            //if company - password verify
             const matchPassword = await bcrypt.compare(password , company.password);
-
             if(!matchPassword){
-                return res.status(401).json({error : 'Inavlid Password'});
+                return res.status(401).json({error : 'Invalid Password'});
             }
+
             const token = jwt.sign({userId : company.id } , process.env.JWT_SECRET , {expiresIn : '2h'});
 
-            return res.status(200).json({message : 'Login successfully' , token,
-            companyData : {
-                username : company.name, useremail : company.email , 
-                userId : company._id , role : company.role,
-            }});
+            return res.status(200).json({
+                message : 'Login successfully',
+                token,
+                companyData : {
+                    username : company.name,
+                    useremail : company.email,
+                    userId : company._id,
+                    role : company.role,
+                }
+            });
         }
 
         if (user.isBlocked) {
             return res.status(401).json({ error: 'Account is blocked' });
         }
 
-        //if user - password verify
         const matchPassword = await bcrypt.compare(password , user.password);
-
         if(!matchPassword){
             return res.status(401).json({error : 'Invalid Password'});
         }
 
         const token = jwt.sign({userId : user.id } , process.env.JWT_SECRET , {expiresIn : '1h'});
 
-        return res.status(200).json({message : 'Login successfully' , token,
-        userData : {
-            username : user.name, useremail : user.email ,
-            userId : user._id  , role: user.role,
-        }});
+        return res.status(200).json({
+            message : 'Login successfully',
+            token,
+            userData : {
+                username : user.name,
+                useremail : user.email,
+                userId : user._id,
+                role: user.role,
+            }
+        });
 
-        
     } catch (error) {
-        next(error);
+        console.log("🔥 LOGIN ERROR:", error);
+        return res.status(500).json({ error: error.message || "Server Error" });
     }
 }
 
-export const googleSignup = async (req, res , next) => {
+// ================= GOOGLE SIGNUP =================
+export const googleSignup = async (req, res) => {
     try {
         const token = req.body.credential;
-
         const decodedData = jwt.decode(token);
+
+        console.log("📥 GOOGLE SIGNUP:", decodedData);
 
         const {name , email , picture , jti} = decodedData;
 
         const user = await userModel.findOne({email});
-
         if(user){
             return res.status(401).json({error : 'User Already Exist'});
         }
 
         const newUser = new userModel({
-            name , email , profileImage : picture , password : jti , role : 'Candidate' ,
+            name,
+            email,
+            profileImage : picture,
+            password : jti,
+            role : 'Candidate',
         });
 
         await newUser.save();
 
-        res.status(201).json({message: 'user saved succesfully'});
+        return res.status(201).json({message: 'user saved succesfully'});
 
     } catch (error) {
-        next(error);
+        console.log("🔥 GOOGLE SIGNUP ERROR:", error);
+        return res.status(500).json({ error: "Google signup failed" });
     }
 }
 
-export const googleLogin = async (req, res ) => {
+// ================= GOOGLE LOGIN =================
+export const googleLogin = async (req, res) => {
     try {
-        // const token = req.body.credential;
         const token = req.body.token;
-
-
         const decodedData = jwt.decode(token);
-            if (!decodedData) {
-      return res.status(401).json({ error: 'Invalid Google token' });
-    }
-    console.log(decodedData,9719);
 
-        const {name , email , profileImage , jti} = decodedData;
-        console.log(email,9000000000000)
-
-        const user = await userModel.findOne({email});
-        console.log(user,89990)
-
-        if(user){
-
-            if (user.isBlocked) {
-                return res.status(401).json({ error: 'Account is blocked' });
-            }
-
-            let token = jwt.sign({userId : user.id , email : user.email} , process.env.JWT_SECRET, {expiresIn: '1h'});
-           return res.status(200).json({message : 'Login Successfull' ,  token, 
-                userData : {
-                    username : user.name , useremail : user.email, role : user.role,
-                    userId : user._id,
-                    profileImage : profileImage
-                }});
-
-        } else {
-             const user = await companyModel.findOne({email});
-              if(user){
-
-            if (user.isBlocked) {
-                return res.status(401).json({ error: 'Account is blocked' });
-            }
-
-            let token = jwt.sign({userId : user.id , email : user.email} , process.env.JWT_SECRET, {expiresIn: '1h'});
-             return res.status(200).json({message : 'Login Successfull' ,  token, 
-                userData : {
-                    username : user.name , useremail : user.email, role : user.role,
-                    userId : user._id,
-                    profileImage : profileImage
-                }});
-
+        if (!decodedData) {
+            return res.status(401).json({ error: 'Invalid Google token' });
         }
 
+        console.log("📥 GOOGLE LOGIN:", decodedData);
 
-           return res.status(401).json({error : 'User not found'});
+        const { email } = decodedData;
+
+        let user = await userModel.findOne({email});
+
+        if(!user){
+            user = await companyModel.findOne({email});
         }
+
+        if(!user){
+            return res.status(401).json({error : 'User not found'});
+        }
+
+        if (user.isBlocked) {
+            return res.status(401).json({ error: 'Account is blocked' });
+        }
+
+        const jwtToken = jwt.sign(
+            {userId : user.id , email : user.email},
+            process.env.JWT_SECRET,
+            {expiresIn: '1h'}
+        );
+
+        return res.status(200).json({
+            message : 'Login Successfull',
+            token: jwtToken,
+            userData : {
+                username : user.name,
+                useremail : user.email,
+                role : user.role,
+                userId : user._id
+            }
+        });
+
     } catch (error) {
-        console.log(error,179099)
-       return res.status(500).json({error : 'Internal Server Error'});
+        console.log("🔥 GOOGLE LOGIN ERROR:", error);
+        return res.status(500).json({error : 'Internal Server Error'});
     }
 }
 

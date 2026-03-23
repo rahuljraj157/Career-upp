@@ -2,17 +2,13 @@ import axios from "axios";
 import toast from "react-hot-toast";
 
 export const axiosInstance = axios.create({
-    // baseURL :'http://localhost:3000'
-    // baseURL :  'https://careerup.website' 
-    // baseURL : "/"
-    //  baseURL: "http://localhost:3000"
-     baseURL: "https://career-upp-bz9i.onrender.com"
+ 
 
-
+    baseURL: "/" 
 });
 
 axiosInstance.interceptors.request.use((config) => {
-    console.log("jjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjj")
+    console.log("jjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjj");
 
     const userToken = localStorage.getItem('userToken');
 
@@ -20,51 +16,53 @@ axiosInstance.interceptors.request.use((config) => {
         config.headers.authorization = `Bearer ${userToken}`;
     }
     return config;
-})
+});
 
 axiosInstance.interceptors.response.use(
     (response) => response,
     (error) => {
         if (error.response && error.response.data) {
             const errorMessage = error.response.data.error || 'An error occurred';
-            // Show error toast with errorMessage
-            toast.error(errorMessage, { duration: 2000, style: { color: '#fff', background: 'black' } });
+            toast.error(errorMessage, {
+                duration: 2000,
+                style: { color: '#fff', background: 'black' }
+            });
         } else {
             console.error('Axios error:', error);
         }
         return Promise.reject(error);
     }
-)
+);
 
 
 
 export const adminAxiosInstance = axios.create({
-    // baseURL :  'http://localhost:3000/admin' ,
-    baseURL:"https://career-upp-bz9i.onrender.com"
-    // baseURL :  'https://careerup.website/admin' 
-    // baseURL : '/admin'
+    
 
+    baseURL: "/admin" 
 });
 
 adminAxiosInstance.interceptors.request.use((config) => {
     const adminToken = localStorage.getItem('adminToken');
 
-    if(adminToken !== null){
+    if (adminToken !== null) {
         config.headers.authorization = `Bearer ${adminToken}`;
     }
     return config;
-})
+});
 
 adminAxiosInstance.interceptors.response.use(
     (response) => response,
     (error) => {
         if (error.response && error.response.data) {
             const errorMessage = error.response.data.error || 'An error occurred';
-            // Show error toast with errorMessage
-            toast.error(errorMessage, { duration: 2000, style: { color: '#fff', background: 'black' } });
+            toast.error(errorMessage, {
+                duration: 2000,
+                style: { color: '#fff', background: 'black' }
+            });
         } else {
             console.error('Axios error:', error);
         }
         return Promise.reject(error);
     }
-)
+);

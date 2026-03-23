@@ -11,6 +11,7 @@ interface UserData {
 
 export const signUp = async(userData: UserData , otp: string, isNotOtp: boolean) => {
     let response ;
+    console.log("anuropppppp,99")
 
     if(isNotOtp) {
         response = await axiosInstance.post('/auth/register' , {userData});
