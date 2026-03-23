@@ -223,35 +223,44 @@ export const login = async (req, res) => {
 // ================= GOOGLE SIGNUP =================
 export const googleSignup = async (req, res) => {
     try {
-        const token = req.body.credential;
+        const token = req.body.token; // ✅ FIXED
+
+        if (!token) {
+            return res.status(400).json({ error: "Google token missing" });
+        }
+
         const decodedData = jwt.decode(token);
+
+        if (!decodedData) {
+            return res.status(401).json({ error: "Invalid Google token" });
+        }
 
         console.log("📥 GOOGLE SIGNUP:", decodedData);
 
-        const {name , email , picture , jti} = decodedData;
+        const { name, email, picture, jti } = decodedData;
 
-        const user = await userModel.findOne({email});
-        if(user){
-            return res.status(401).json({error : 'User Already Exist'});
+        const user = await userModel.findOne({ email });
+        if (user) {
+            return res.status(401).json({ error: 'User Already Exist' });
         }
 
         const newUser = new userModel({
             name,
             email,
-            profileImage : picture,
-            password : jti,
-            role : 'Candidate',
+            profileImage: picture,
+            password: jti,
+            role: 'Candidate',
         });
 
         await newUser.save();
 
-        return res.status(201).json({message: 'user saved succesfully'});
+        return res.status(201).json({ message: 'user saved succesfully' });
 
     } catch (error) {
         console.log("🔥 GOOGLE SIGNUP ERROR:", error);
         return res.status(500).json({ error: "Google signup failed" });
     }
-}
+};
 
 // ================= GOOGLE LOGIN =================
 export const googleLogin = async (req, res) => {
