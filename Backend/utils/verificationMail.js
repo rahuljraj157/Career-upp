@@ -131,7 +131,7 @@ export const sendVerificationEmail = async (userEmailId) => {
     const otpValue = Math.floor(100000 + Math.random() * 900000);
 
     const mailContent = {
-      from: `"CareerUp" <${SMTP_USER}>`,
+       from: `"CareerUp" <rahuljraj157@gmail.com>`,
       to: userEmailId,
       subject: "OTP Verification",
       html: `
